@@ -172,7 +172,7 @@ int createLogFile(void)
 	file = fopen(filename, "w");
 	
 	// Write csv header
-	fprintf(file, "Time [ms],Speed [LSB],Steer_angle [LSB],Acc-X [g],Acc-Y [g],Acc-Z [g],Rollrate-X [deg/s],Rollrate-Y [deg/s],Rollrate-Z [deg/s]\n");
+	fprintf(file, "Time [s],Speed [LSB],Steer_angle [LSB],Acc-X [g],Acc-Y [g],Acc-Z [g],Rollrate-X [deg/s],Rollrate-Y [deg/s],Rollrate-Z [deg/s]\n");
 }
 int endLogFile(void)
 {
