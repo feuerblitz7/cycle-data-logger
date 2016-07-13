@@ -37,6 +37,7 @@
 // Variables
 int state, prev_state;
 int bike = BIKE_ETRIKE;
+int file_transfer_done = FALSE;
 FILE *file;
 
 // Methods
@@ -84,11 +85,11 @@ int main(void)
 				{
 					state = STATE_SHUTDOWN;
 				}
-				// Check if USB stick is plugged in
-				//else if(TODO:USBDETECTED)
-				//{
-				//	state = STATE_FILETRANSFER;
-				//}
+				// Check if USB stick is plugged in and data is yet unsaved
+				else if(opendir("/media/usb/data") && !file_transfer_done)
+				{
+					state = STATE_FILETRANSFER;
+				}
 				else
 				{
 					// By default, delay 100 ms
@@ -120,6 +121,9 @@ int main(void)
 					// Change back to idle state
 					state = STATE_IDLE;
 					
+					// Mark file as unsafed
+					file_transfer_done = FALSE;
+					
 					// Wait 2 s for user to release button
 					delay(2000);
 				}
@@ -134,6 +138,9 @@ int main(void)
 			case STATE_FILETRANSFER:
 				// Copy/Move folder from /home/pi/trike/data/ to /media/usb/data
 				moveDataToUSB();
+				
+				// Mark transfer as done
+				file_transfer_done = TRUE;
 				
 				// Change back to idle
 				state = IDLE_STATE;
