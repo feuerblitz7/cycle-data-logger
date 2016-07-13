@@ -39,7 +39,7 @@
 int state, prev_state;
 int bike = BIKE_ETRIKE;
 int file_transfer_done = FALSE;
-struct timeval tval_before, tval_after, tval_result = NULL;
+struct timeval tval_before, tval_after, tval_result;
 FILE *file;
 
 // Main method
@@ -173,6 +173,9 @@ int createLogFile(void)
 	
 	// Write csv header
 	fprintf(file, "Time [s],Speed [LSB],Steer_angle [LSB],Acc-X [g],Acc-Y [g],Acc-Z [g],Rollrate-X [deg/s],Rollrate-Y [deg/s],Rollrate-Z [deg/s]\n");
+	
+	// Start timer
+	gettimeofday(&tval_before, NULL);
 }
 int endLogFile(void)
 {
@@ -182,12 +185,6 @@ int endLogFile(void)
 
 int dataLog(void)
 {
-	// Start timer
-	if(tval_before == NULL)
-	{
-		gettimeofday(&tval_before, NULL);
-	}
-	
 	// Log time [ms]
 	fprintf(file, "???,");
 	
