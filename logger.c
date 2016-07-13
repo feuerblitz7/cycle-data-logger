@@ -1,6 +1,7 @@
 // Header
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <wiringPi.h>
 #include "mcp3008.h"
 
@@ -38,6 +39,7 @@
 int state, prev_state;
 int bike = BIKE_ETRIKE;
 int file_transfer_done = FALSE;
+struct timeval tval_before, tval_after, tval_result;
 FILE *file;
 
 // Main method
@@ -180,6 +182,9 @@ int endLogFile(void)
 
 int dataLog(void)
 {
+	// Start timer
+	gettimeofday(&tval_before, NULL);
+
 	// Log time [ms]
 	fprintf(file, "???,");
 	
@@ -188,6 +193,13 @@ int dataLog(void)
 	
 	// Log data from IMU
 	fprintf(file, "0,0,0,0,0,0\n");
+	
+	// Stop timer and calculate elapsed time
+	gettimeofday(&tval_after, NULL);
+	timersub(&tval_after, &tval_before, &tval_result);
+	
+	// TODO: Move to first column!
+	printf("Time elapsed: %ld.%03ld\n", (long int)tval_result.tv_msec, (long int)tval_result.tv_usec);
 }
 
 int setupGPIO(int gpioPin)
