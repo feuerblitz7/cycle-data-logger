@@ -40,10 +40,6 @@ int bike = BIKE_ETRIKE;
 int file_transfer_done = FALSE;
 FILE *file;
 
-// Methods
-int setupGPIO
-int moveDataToUSB(void);
-
 // Main method
 int main(void)
 {
