@@ -1,1 +1,1 @@
-int logADCData(FILE file);
+int logADCData(FILE *file);
