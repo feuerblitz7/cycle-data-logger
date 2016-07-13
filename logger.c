@@ -164,7 +164,7 @@ int createLogFile(void)
 	struct tm* now_tm;
 	now_tm = localtime(&now);
 
-	strftime(filename, 64, "/home/pi/data/%Y-%m-%d %H:%M.csv", now_tm);
+	strftime(filename, 64, "/home/pi/data/%Y-%m-%D %H:%M.csv", now_tm);
 	
 	// Open file (create if not existing, otherwise truncate)
 	file = fopen(filename, "w");
