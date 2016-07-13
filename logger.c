@@ -187,7 +187,7 @@ int dataLog(void)
 	logADCData(file);
 	
 	// Log data from IMU
-	fprintf("0,0,0,0,0,0\n");
+	fprintf(file, "0,0,0,0,0,0\n");
 }
 
 int setupGPIO(int gpioPin)
