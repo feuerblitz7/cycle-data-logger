@@ -183,8 +183,11 @@ int endLogFile(void)
 int dataLog(void)
 {
 	// Start timer
-	gettimeofday(&tval_before, NULL);
-
+	if(!tval_before)
+	{
+		gettimeofday(&tval_before, NULL);
+	}
+	
 	// Log time [ms]
 	fprintf(file, "???,");
 	
