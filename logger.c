@@ -143,7 +143,7 @@ int main(void)
 				file_transfer_done = TRUE;
 				
 				// Change back to idle
-				state = IDLE_STATE;
+				state = STATE_IDLE;
 				break;
 			
 			case STATE_SHUTDOWN:
