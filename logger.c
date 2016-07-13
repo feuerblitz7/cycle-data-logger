@@ -199,7 +199,7 @@ int dataLog(void)
 	timersub(&tval_after, &tval_before, &tval_result);
 	
 	// TODO: Move to first column!
-	printf("Time elapsed: %ld.%03ld\n", (long int)tval_result.tv_msec, (long int)tval_result.tv_usec);
+	printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
 }
 
 int setupGPIO(int gpioPin)
