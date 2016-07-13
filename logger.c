@@ -48,7 +48,7 @@ int moveDataToUSB(void);
 int main(void)
 {
 	// Start in idle state
-	state = IDLE_STATE;
+	state = STATE_IDLE;
 	
 	// Setup the Pi GPIO
 	setupGPIO();
