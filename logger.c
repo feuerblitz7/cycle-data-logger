@@ -39,7 +39,7 @@
 int state, prev_state;
 int bike = BIKE_ETRIKE;
 int file_transfer_done = FALSE;
-struct timeval tval_before, tval_after, tval_result;
+struct timeval tval_before, tval_after, tval_result = NULL;
 FILE *file;
 
 // Main method
@@ -183,7 +183,7 @@ int endLogFile(void)
 int dataLog(void)
 {
 	// Start timer
-	if(!tval_before)
+	if(tval_before == NULL)
 	{
 		gettimeofday(&tval_before, NULL);
 	}
