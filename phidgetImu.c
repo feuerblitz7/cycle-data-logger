@@ -1,147 +1,183 @@
-#include <cstdio>
-#include "phidget21.h"
+// - Spatial simple -
+// This simple example creates an spatial handle, initializes it, hooks the event handlers and opens it.  It then waits
+// for a spatial to be attached and waits for events to be fired. We preset the data rate to 16ms, but can be set higher (eg. 200)
+// in order to slow down the events to make them more visible.
+//
+// Copyright 2010 Phidgets Inc.  All rights reserved.
+// This work is licensed under the Creative Commons Attribution 2.5 Canada License. 
+// view a copy of this license, visit http://creativecommons.org/licenses/by/2.5/ca/
 
-#define MAX_FILE_LENGTH (100000)
+#include <stdio.h>
+#include <sys/time.h>
+#include <time.h>
+#include <phidget21.h>
 
-
-typedef struct
+void delay(int miliseconds)
 {
-    int serial_no;
-    CPhidgetSpatialHandle handle;
-    FILE* file;
-    int file_count;
-    size_t file_length;
-
-    CPhidgetHandle getHandle() const {return reinterpret_cast<CPhidgetHandle>(handle);}
-
-    void createNewFile() {
-                            char filename[100+1];
-                            snprintf(filename, 100, "spatial_%d_%d.log", serial_no, ++file_count);
-                            if (file)
-                            {
-                                fclose(file);
-                            }
-                            file_length = 0;
-                            file = fopen(filename, "wb");
-                         }
-} SpatialInfo;
-
-
-int CCONV SpatialDataHandler(CPhidgetSpatialHandle handle, void* userptr, CPhidgetSpatial_SpatialEventDataHandle* data, int count)
-{
-    SpatialInfo* spatial_info = reinterpret_cast<SpatialInfo*>(userptr);
-    if (handle != spatial_info->handle)
-        return EPHIDGET_UNEXPECTED;
-   
-    int axis_count;
-    CPhidgetSpatial_getAccelerationAxisCount(spatial_info->handle, &axis_count);
-
-    int i, j;
-    for (i=0; i<count; i++)
-    {
-        spatial_info->file_length += fprintf(spatial_info->file, "%4d.%06d", data[i]->timestamp.seconds, data[i]->timestamp.microseconds);
-        for (j=0; j<axis_count; j++)
-        {
-            spatial_info->file_length += fprintf(spatial_info->file, ";%0.3f", data[i]->acceleration[j]);
-        }
-        spatial_info->file_length += fprintf(spatial_info->file, "\n");
-
-        if (MAX_FILE_LENGTH < spatial_info->file_length)
-        {
-            spatial_info->createNewFile();
-        }
-    }
-    return EPHIDGET_OK;
+	long pause;
+	clock_t now, then;
+	pause = miliseconds*(CLOCKS_PER_SEC/1000);
+	now = then = clock();
+	while((now-then) < pause)
+		now = clock();
 }
 
-bool RegisterSpatial(SpatialInfo& spatial_info, int serial_no)
+//callback that will run if the Spatial is attached to the computer
+int CCONV AttachHandler(CPhidgetHandle spatial, void *userptr)
 {
-    const char* err;
-    int result;
-    spatial_info.serial_no = serial_no;
-    spatial_info.handle = NULL;
-    if (EPHIDGET_OK!=(result=CPhidgetSpatial_create(&spatial_info.handle)))
-    {
-        CPhidget_getErrorDescription(result, &err);
-        fprintf(stderr, "Failed to create spatial with serial number %d: %s\n", serial_no, err);
-        return false;
-    }
+	int serialNo;
+	CPhidget_getSerialNumber(spatial, &serialNo);
+	printf("Spatial %10d attached!", serialNo);
 
-    spatial_info.file = NULL;
-    spatial_info.file_count = 0;
-    spatial_info.file_length = 0;
-    spatial_info.createNewFile();
-
-    if (EPHIDGET_OK!=(result=CPhidgetSpatial_set_OnSpatialData_Handler(spatial_info.handle, SpatialDataHandler, reinterpret_cast<void*>(&spatial_info))))
-    {
-        CPhidget_getErrorDescription(result, &err);
-        fprintf(stderr, "Failed to set data handler for spatial with serial number %d: %s\n", serial_no, err);
-        return false;
-    }
-    if (EPHIDGET_OK!=(result=CPhidget_open(spatial_info.getHandle(), serial_no)))
-    {
-        CPhidget_getErrorDescription(result, &err);
-        fprintf(stderr, "Failed to open spatial with serial number %d: %s\n", serial_no, err);
-        return false;
-    }
-    if (EPHIDGET_OK!=(result=CPhidget_waitForAttachment(spatial_info.getHandle(), 1000)))
-    {
-        CPhidget_getErrorDescription(result, &err);
-        fprintf(stderr, "Failed to wait for attachment for spatial with serial number %d: %s\n", serial_no, err);
-        return false;
-    }
-    if (EPHIDGET_OK!=(result=CPhidgetSpatial_setDataRate(spatial_info.handle, 8)))
-    {
-        CPhidget_getErrorDescription(result, &err);
-        fprintf(stderr, "Failed to set data rate for spatial with serial number %d: %s\n", serial_no, err);
-        return false;
-    }
-    return true;
+	return 0;
 }
 
-void UnregisterSpatial(const SpatialInfo& spatial_info)
+//callback that will run if the Spatial is detached from the computer
+int CCONV DetachHandler(CPhidgetHandle spatial, void *userptr)
 {
-    CPhidget_close(spatial_info.getHandle());
-    CPhidget_delete(spatial_info.getHandle());
+	int serialNo;
+	CPhidget_getSerialNumber(spatial, &serialNo);
+	printf("Spatial %10d detached! \n", serialNo);
 
-    if (spatial_info.file)
-        fclose(spatial_info.file);
+	return 0;
 }
 
-int main(int argc, char** argv)
+//callback that will run if the Spatial generates an error
+int CCONV ErrorHandler(CPhidgetHandle spatial, void *userptr, int ErrorCode, const char *unknown)
 {
-    if (argc < 2)
-    {
-        fprintf(stderr, "Usage: %s <PhidgetSpatial serial no> [<PhidgetSpatial serial no>]...\n\n", argv[0]);
-    }
-   
-    SpatialInfo* spatials = new SpatialInfo[argc-1];
-   
-    int spatial_count = 0;
-    int i;
-    for (i=1; i<argc; i++)
-    {
-        int serial_no;
-        if (0 < sscanf(argv[i], "%d", &serial_no))
-        {
-            if (RegisterSpatial(spatials[spatial_count], serial_no))
-            {
-                spatial_count++;
-            }
-        }
-    }
-
-    if (0 < spatial_count)
-    {
-        fprintf(stdout, "Press [Enter] to end");
-        getchar();
-    }
-   
-    for (i=0; i<spatial_count; i++)
-    {
-        UnregisterSpatial(spatials[i]);
-    }
-    delete[] spatials;
-
-    return 0;
+	printf("Error handled. %d - %s \n", ErrorCode, unknown);
+	return 0;
 }
+
+//callback that will run at datarate
+//data - array of spatial event data structures that holds the spatial data packets that were sent in this event
+//count - the number of spatial data event packets included in this event
+
+FILE *f;
+struct timeval tv;
+
+int CCONV SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr, CPhidgetSpatial_SpatialEventDataHandle *data, int count)
+{
+	if(!f)
+	{
+		printf("FILE OPENED!");
+		f = fopen("2016-07-08_15:28.csv", "w+");
+	}
+	//fprintf(f, "us,Acc-X,Acc-Y,RollR-X\n");
+	int i;
+	//printf("Number of Data Packets in this event: %d\n", count);
+	for(i = 0; i < count; i++)
+	{
+		//printf("Data set %d of %d\n", i, count);
+		fprintf(f, "%d,%6f,%6f,%6f", data[i]->timestamp.microseconds, data[i]->acceleration[0], data[i]->acceleration[1], data[i]->angularRate[0]);
+		//printf("%d\n", data[i]->timestamp.microseconds);
+//printf("=== Data Set: %d ===\n", i);
+		//printf("Acceleration> x: %6f  y: %6f  z: %6f\n", data[i]->acceleration[0], data[i]->acceleration[1], data[i]->acceleration[2]);
+		//printf("Angular Rate> x: %6f  y: %6f  z: %6f\n", data[i]->angularRate[0], data[i]->angularRate[1], data[i]->angularRate[2]);
+		//printf("Magnetic Field> x: %6f  y: %6f  z: %6f\n", data[i]->magneticField[0], data[i]->magneticField[1], data[i]->magneticField[2]);
+		//printf("Timestamp> seconds: %d -- microseconds: %d\n", data[i]->timestamp.seconds, data[i]->timestamp.microseconds);		
+		delay(2);
+		gettimeofday(&tv, NULL);
+		fprintf(f, "%d\n", (tv.tv_sec*1000 + tv.tv_usec/1000));
+	}
+	//fclose(f);
+
+	//printf("---------------------------------------------\n");
+
+	return 0;
+}
+
+//Display the properties of the attached phidget to the screen.  
+//We will be displaying the name, serial number, version of the attached device, the number of accelerometer, gyro, and compass Axes, and the current data rate
+// of the attached Spatial.
+int display_properties(CPhidgetHandle phid)
+{
+	int serialNo, version;
+	const char* ptr;
+	int numAccelAxes, numGyroAxes, numCompassAxes, dataRateMax, dataRateMin;
+
+	CPhidget_getDeviceType(phid, &ptr);
+	CPhidget_getSerialNumber(phid, &serialNo);
+	CPhidget_getDeviceVersion(phid, &version);
+	CPhidgetSpatial_getAccelerationAxisCount((CPhidgetSpatialHandle)phid, &numAccelAxes);
+	CPhidgetSpatial_getGyroAxisCount((CPhidgetSpatialHandle)phid, &numGyroAxes);
+	CPhidgetSpatial_getCompassAxisCount((CPhidgetSpatialHandle)phid, &numCompassAxes);
+	CPhidgetSpatial_getDataRateMax((CPhidgetSpatialHandle)phid, &dataRateMax);
+	CPhidgetSpatial_getDataRateMin((CPhidgetSpatialHandle)phid, &dataRateMin);
+
+	
+
+	printf("%s\n", ptr);
+	printf("Serial Number: %10d\nVersion: %8d\n", serialNo, version);
+	printf("Number of Accel Axes: %i\n", numAccelAxes);
+	printf("Number of Gyro Axes: %i\n", numGyroAxes);
+	printf("Number of Compass Axes: %i\n", numCompassAxes);
+	printf("datarate> Max: %d  Min: %d\n", dataRateMax, dataRateMin);
+
+	return 0;
+}
+
+int spatial_simple()
+{
+	int result;
+	const char *err;
+
+	//Declare a spatial handle
+	CPhidgetSpatialHandle spatial = 0;
+
+	//create the spatial object
+	CPhidgetSpatial_create(&spatial);
+
+	//Set the handlers to be run when the device is plugged in or opened from software, unplugged or closed from software, or generates an error.
+	CPhidget_set_OnAttach_Handler((CPhidgetHandle)spatial, AttachHandler, NULL);
+	CPhidget_set_OnDetach_Handler((CPhidgetHandle)spatial, DetachHandler, NULL);
+	CPhidget_set_OnError_Handler((CPhidgetHandle)spatial, ErrorHandler, NULL);
+
+	//Registers a callback that will run according to the set data rate that will return the spatial data changes
+	//Requires the handle for the Spatial, the callback handler function that will be called, 
+	//and an arbitrary pointer that will be supplied to the callback function (may be NULL)
+	CPhidgetSpatial_set_OnSpatialData_Handler(spatial, SpatialDataHandler, NULL);
+
+	//open the spatial object for device connections
+	CPhidget_open((CPhidgetHandle)spatial, -1);
+
+	//get the program to wait for a spatial device to be attached
+	printf("Waiting for spatial to be attached.... \n");
+	if((result = CPhidget_waitForAttachment((CPhidgetHandle)spatial, 10000)))
+	{
+		CPhidget_getErrorDescription(result, &err);
+		printf("Problem waiting for attachment: %s\n", err);
+		return 0;
+	}
+
+	//Display the properties of the attached spatial device
+	display_properties((CPhidgetHandle)spatial);
+
+	//read spatial event data
+	printf("Reading.....\n");
+	
+	//Set the data rate for the spatial events
+	CPhidgetSpatial_setDataRate(spatial, 10);
+
+	//run until user input is read
+	printf("Press any key to end\n");
+	getchar();
+
+	//since user input has been read, this is a signal to terminate the program so we will close the phidget and delete the object we created
+	printf("Closing...\n");
+	CPhidget_close((CPhidgetHandle)spatial);
+	CPhidget_delete((CPhidgetHandle)spatial);
+
+	fclose(f);
+
+	return 0;
+}
+
+//main entry point to the program
+int main(int argc, char* argv[])
+{
+	//all done, exit
+	spatial_simple();
+	return 0;
+}
+
