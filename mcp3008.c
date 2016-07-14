@@ -8,22 +8,22 @@
  */
 #define _GNU_SOURCE
 
-//#include <stdio.h>
-//#include <stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <stdint.h>
 #include <string.h>
 #include <errno.h>
 
-//#include <wiringPi.h>
+#include <wiringPi.h>
 #include <wiringPiSPI.h>
 
-//#define	TRUE	            (1==1)
-//#define	FALSE	            (!TRUE)
+#define	TRUE	            (1==1)
+#define	FALSE	            (!TRUE)
 #define CHAN_CONFIG_SINGLE  8
 #define CHAN_CONFIG_DIFF    0
 
-static int myFd ;
+//static int myFd ;
 
 char *usage = "Usage: mcp3008 all|analogChannel[1-8] [-l] [-ce1] [-d]";
 // -l   = load SPI driver,  default: do not load
@@ -34,16 +34,16 @@ void loadSpiDriver()
 {
     if (system("gpio load spi") == -1)
     {
-        fprintf (stderr, "Can't load the SPI driver: %s\n", strerror (errno)) ;
+        printf ("Can't load the SPI driver: %s\n", strerror (errno)) ;
         exit (EXIT_FAILURE) ;
     }
 }
 
 void spiSetup (int spiChannel)
 {
-    if ((myFd = wiringPiSPISetup (spiChannel, 1000000)) < 0)
+    if ((wiringPiSPISetup (spiChannel, 1000000)) < 0)
     {
-        fprintf (stderr, "Can't open the SPI bus: %s\n", strerror (errno)) ;
+        printf ("Can't open the SPI bus: %s\n", strerror (errno)) ;
         exit (EXIT_FAILURE) ;
     }
 }
@@ -59,17 +59,18 @@ int myAnalogRead(int spiChannel,int channelConfig,int analogChannel)
 }
 
 //double[] getData (int argc, char *argv [])
-int writeADCData (FILE *file)
+//int logADCData (FILE *file)
+void logADCData(FILE *file)
 {
-	float data[] = {0, 0};
-	
+    float data[] = {0, 0};
+
     int loadSpi=FALSE;
     int analogChannel=0;
     int spiChannel=0;
     int channelConfig=CHAN_CONFIG_SINGLE;
-    if (argc < 2)
+    /*if (argc < 2)
     {
-        fprintf (stderr, "%s\n", usage) ;
+        printf("%s\n", usage) ;
         return 1 ;
     }
     if((strcasecmp (argv [1], "all") == 0) )
@@ -88,12 +89,14 @@ int writeADCData (FILE *file)
             spiChannel=1;
         else if (strcasecmp (argv [i], "-d") == 0 || strcasecmp (argv [i], "-diff") == 0)
             channelConfig=CHAN_CONFIG_DIFF;
-    }
+    }*/
     //
+    
     if(loadSpi==TRUE)
         loadSpiDriver();
-    wiringPiSetup () ;
-    spiSetup(spiChannel);
+    //wiringPiSetup () ;
+    //spiSetup(spiChannel);
+    
     //
     /*if(analogChannel>0)
     {
@@ -111,9 +114,9 @@ int writeADCData (FILE *file)
     }*/
 	data[0] = 280.0f * ((float)myAnalogRead(spiChannel, channelConfig, 0) / 1023.0f);
 	data[1] = 3.0f * ((float)myAnalogRead(spiChannel, channelConfig, 1) / 1023.0f);
-	
+
 	fprintf(file, "%f,%f,", data[0], data[1]);
 
-    close (myFd) ;
-    return data;
+    //close (myFd) ;
+    //return output;
 }
