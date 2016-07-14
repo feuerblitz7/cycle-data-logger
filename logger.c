@@ -2,12 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/time.h>
 #include <wiringPi.h>
 #include "mcp3008.h"
 
 // Define standards
 #define TRUE	(1==1)
 #define FALSE	(!TRUE)
+#define UNDEF	-1
 
 // Bike specific things
 #define BIKE_ETRIKE 	0
@@ -36,7 +38,7 @@
 #define ADC_CHAN_DCM		1
 
 // Variables
-int state, prev_state;
+int state, prev_state, line_index;
 int bike = BIKE_ETRIKE;
 int file_transfer_done = FALSE;
 struct timeval tval_before, tval_after, tval_result;
@@ -46,6 +48,7 @@ FILE *file;
 int main(void)
 {
 	// Start in idle state
+	prev_state = UNDEF;
 	state = STATE_IDLE;
 	
 	// Setup the Pi GPIO
@@ -59,6 +62,7 @@ int main(void)
 		switch(state)
 		{
 			case STATE_IDLE:
+printf("In Idle state.\n");
 				// At state change
 				if(state != prev_state)
 				{
@@ -74,7 +78,7 @@ int main(void)
 				{
 					// Change to logging state
 					state = STATE_LOG;
-					
+printf("Switching to logging state!\n");					
 					// Wait 2 s for user to release button
 					delay(2000);
 				}
@@ -100,13 +104,14 @@ int main(void)
 				// At state change
 				if(state != prev_state)
 				{
+printf("Logging just started...\n");
 					// Turn off red LED and turn on green LED
 					digitalWrite(PIN_LED_GREEN, LOW);
 					digitalWrite(PIN_LED_RED, HIGH);
 					
 					// Init logging
 					createLogFile();
-					
+printf("Log file created!\n");					
 					// Set previous state
 					prev_state = state;
 				}
@@ -134,9 +139,15 @@ int main(void)
 				break;
 			
 			case STATE_FILETRANSFER:
+				// Turn on also red LED
+				digitalWrite(PIN_LED_RED, HIGH);
+printf("File transfer start!\n");
 				// Copy/Move folder from /home/pi/trike/data/ to /media/usb/data
 				moveDataToUSB();
-				
+printf("File transfer done!\n");
+				// Turn off red LED
+				digitalWrite(PIN_LED_RED, LOW);
+
 				// Mark transfer as done
 				file_transfer_done = TRUE;
 				
@@ -145,6 +156,17 @@ int main(void)
 				break;
 			
 			case STATE_SHUTDOWN:
+printf("Going to shutdown!\n");
+digitalWrite(PIN_LED_RED, HIGH);
+delay(250);
+digitalWrite(PIN_LED_RED, LOW);
+delay(250);
+digitalWrite(PIN_LED_RED, HIGH);
+delay(250);
+digitalWrite(PIN_LED_RED, LOW);
+delay(250);
+digitalWrite(PIN_LED_RED, HIGH);
+
 				// Shutdown Pi
 				system("sudo shutdown -h now");
 				break;
@@ -152,8 +174,6 @@ int main(void)
 			default:
 				break;
 		}
-		
-		prev_state = state;
 	}
 }
 
@@ -166,16 +186,18 @@ int createLogFile(void)
 	struct tm* now_tm;
 	now_tm = localtime(&now);
 
-	strftime(filename, 64, "/home/pi/data/%Y-%m-%d %H:%M.csv", now_tm);
+	strftime(filename, 64, "/home/pi/data/%Y-%m-%d_%H-%M.csv", now_tm);
 	
 	// Open file (create if not existing, otherwise truncate)
 	file = fopen(filename, "w");
 	
 	// Write csv header
-	fprintf(file, "Time [s],Speed [LSB],Steer_angle [LSB],Acc-X [g],Acc-Y [g],Acc-Z [g],Rollrate-X [deg/s],Rollrate-Y [deg/s],Rollrate-Z [deg/s]\n");
-	
-	// Start timer
-	gettimeofday(&tval_before, NULL);
+	fprintf(file, "Time [s],Steer-angle [deg],Speed [V],Acc-X [g],Acc-Y [g],Acc-Z [g],Rollrate-X [deg/s],Rollrate-Y [deg/s],Rollrate-Z [deg/s]\n");
+
+	// Reset line index
+	line_index = 0;
+	// Setup ADC
+	spiSetup(0);
 }
 int endLogFile(void)
 {
@@ -186,20 +208,31 @@ int endLogFile(void)
 int dataLog(void)
 {
 	// Log time [ms]
-	fprintf(file, "???,");
-	
+	if(line_index == 0)
+	{
+		// First entry is 0.000000 [s]
+		fprintf(file, "0.000000,");
+
+		// Start time
+		gettimeofday(&tval_before, NULL);
+	}
+	else
+	{
+		// Measure new time and calculate elapsed time
+		gettimeofday(&tval_after, NULL);
+		timersub(&tval_after, &tval_before, &tval_result);
+
+		fprintf(file, "%ld.%06ld,", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+	}
+
 	// Log data from ADC
 	logADCData(file);
-	
+
 	// Log data from IMU
 	fprintf(file, "0,0,0,0,0,0\n");
-	
-	// Stop timer and calculate elapsed time
-	gettimeofday(&tval_after, NULL);
-	timersub(&tval_after, &tval_before, &tval_result);
-	
-	// TODO: Move to first column!
-	printf("Time elapsed: %ld.%06ld\n", (long int)tval_result.tv_sec, (long int)tval_result.tv_usec);
+
+	// Increment line index
+	line_index++;
 }
 
 int setupGPIO(int gpioPin)
@@ -215,9 +248,13 @@ int setupGPIO(int gpioPin)
 	// Assign input pins 
 	pinMode(PIN_BTN_LOG, INPUT);
 	pullUpDnControl(PIN_BTN_LOG, PUD_UP);
+	pinMode(PIN_BTN_SHUTDOWN, INPUT);
+	pullUpDnControl(PIN_BTN_SHUTDOWN, PUD_UP);
+
+	return 0;
 }
 
-int moveDataToUSB(void)
+int moveDataToUSB()
 {
 	switch(bike)
 	{
@@ -236,6 +273,6 @@ int moveDataToUSB(void)
 		default:
 			break;
 	}
-	
+
 	return 0;
 }
