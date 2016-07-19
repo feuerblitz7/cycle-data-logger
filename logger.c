@@ -233,9 +233,6 @@ int createLogFile(void)
 
 int endLogFile(void)
 {
-	// Close spatial IMU
-	//closeSpatialIMU();
-
 	// Close csv file
 	fclose(file);
 }
