@@ -80,8 +80,8 @@ int main(void)
 				if(state != prev_state)
 				{
 					// Turn off red LED and turn on green LED
-					digitalWrite(PIN_LED_RED, LOW);
-					digitalWrite(PIN_LED_GREEN, HIGH);
+					digitalWrite(PIN_LED_RED, HIGH);
+					digitalWrite(PIN_LED_GREEN, LOW);
 					
 					// Reset previous state
 					prev_state = state;
@@ -122,8 +122,8 @@ int main(void)
 					printf("Logging just started...\n");
 					
 					// Turn off red LED and turn on green LED
-					digitalWrite(PIN_LED_GREEN, LOW);
-					digitalWrite(PIN_LED_RED, HIGH);
+					digitalWrite(PIN_LED_GREEN, HIGH);
+					digitalWrite(PIN_LED_RED, LOW);
 
 					// Init logging
 					createLogFile();
@@ -154,7 +154,7 @@ int main(void)
 
 			case STATE_FILETRANSFER:
 				// Turn on also red LED
-				digitalWrite(PIN_LED_RED, HIGH);
+				digitalWrite(PIN_LED_GREEN, HIGH);
 				
 				printf("File transfer start.\n");
 				
@@ -164,7 +164,7 @@ int main(void)
 				printf("File transfer done.\n");
 				
 				// Turn off red LED
-				digitalWrite(PIN_LED_RED, LOW);
+				digitalWrite(PIN_LED_GREEN, LOW);
 
 				// Mark transfer as done
 				file_transfer_done = TRUE;
@@ -178,15 +178,15 @@ int main(void)
 				
 				printf("Going to shutdown...\n");
 				
-				digitalWrite(PIN_LED_RED, HIGH);
+				digitalWrite(PIN_LED_GREEN, HIGH);
 				delay(250);
-				digitalWrite(PIN_LED_RED, LOW);
+				digitalWrite(PIN_LED_GREEN, LOW);
 				delay(250);
-				digitalWrite(PIN_LED_RED, HIGH);
+				digitalWrite(PIN_LED_GREEN, HIGH);
 				delay(250);
-				digitalWrite(PIN_LED_RED, LOW);
+				digitalWrite(PIN_LED_GREEN, LOW);
 				delay(250);
-				digitalWrite(PIN_LED_RED, HIGH);
+				digitalWrite(PIN_LED_GREEN, HIGH);
 				
 				closeSpatialIMU();
 
