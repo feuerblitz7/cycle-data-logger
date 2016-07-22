@@ -177,15 +177,15 @@ int main(void)
 				
 				printf("Going to shutdown...\n");
 				
-				digitalWrite(PIN_LED_GREEN, HIGH);
+				digitalWrite(PIN_LED_RED, HIGH);
 				delay(250);
-				digitalWrite(PIN_LED_GREEN, LOW);
+				digitalWrite(PIN_LED_RED, LOW);
 				delay(250);
-				digitalWrite(PIN_LED_GREEN, HIGH);
+				digitalWrite(PIN_LED_RED, HIGH);
 				delay(250);
-				digitalWrite(PIN_LED_GREEN, LOW);
+				digitalWrite(PIN_LED_RED, LOW);
 				delay(250);
-				digitalWrite(PIN_LED_GREEN, HIGH);
+				digitalWrite(PIN_LED_RED, HIGH);
 				
 				closeSpatialIMU();
 
