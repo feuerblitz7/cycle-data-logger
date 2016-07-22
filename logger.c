@@ -123,7 +123,6 @@ int main(void)
 					
 					// Turn off red LED and turn on green LED
 					digitalWrite(PIN_LED_GREEN, HIGH);
-					digitalWrite(PIN_LED_RED, LOW);
 
 					// Init logging
 					createLogFile();
