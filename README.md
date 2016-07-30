@@ -1,3 +1,3 @@
 # E-trike evaluation
 
-Data logger for Raspberry Pi using IMU & ADC (Potentiometer & DC motor) data
+Data logger for Raspberry Pi collecting IMU & ADC (Potentiometer & DC motor) data
