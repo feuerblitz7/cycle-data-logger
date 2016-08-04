@@ -56,6 +56,15 @@ FILE *file;
 CPhidgetHandle spatial;
 int initSpatial = FALSE;
 
+// Methods
+int createLogFile();
+int endLogFile();
+int initSpatialIMU();
+int closeSpatialIMU();
+int setupGPIO();
+int moveDataToUSB();
+
+
 // Main method
 int main(void)
 {
@@ -199,7 +208,7 @@ int main(void)
 	}
 }
 
-int createLogFile(void)
+int createLogFile()
 {
 	// Create filename /home/pi/data/YYYY-MM-DD HH:mm.csv
 	char filename[64];
@@ -228,12 +237,16 @@ int createLogFile(void)
 		initSpatialIMU();
 		initSpatial = TRUE;
 	}
+	
+	return 0;
 }
 
-int endLogFile(void)
+int endLogFile()
 {
 	// Close csv file
 	fclose(file);
+	
+	return 0;
 }
 
 int setupGPIO()
