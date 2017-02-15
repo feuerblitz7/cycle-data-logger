@@ -1,3 +1,13 @@
+/*
+ * logger.c:
+ * Main program for loggin data from IMU and analog sensors
+ *
+ * Requires: 	wiringPi (http://wiringpi.com) and
+ * 		phidgets (http://www.phidgets.com/)
+ * Copyright (c) 2016 Alexander Rasch
+ ***********************************************************************
+ */
+
 // Header
 #include <dirent.h>
 #include <stdio.h>
