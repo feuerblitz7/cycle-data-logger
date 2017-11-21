@@ -1,6 +1,6 @@
 /*
  * logger.c:
- * Main program for loggin data from IMU and analog sensors
+ * Main program for logging data from IMU and analog sensors
  *
  * Requires: 	wiringPi (http://wiringpi.com) and
  * 		phidgets (http://www.phidgets.com/)
